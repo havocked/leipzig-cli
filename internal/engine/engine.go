@@ -31,6 +31,8 @@ func (e *Engine) Fetch(ctx context.Context, from, to time.Time) ([]model.Event, 
 		all = append(all, events...)
 	}
 
+	all = Dedup(all)
+
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].StartTime.Before(all[j].StartTime)
 	})
