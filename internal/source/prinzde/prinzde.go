@@ -89,6 +89,10 @@ func (s *Source) Fetch(ctx context.Context, from, to time.Time) ([]model.Event, 
 		// Image
 		imageURL, _ := card.Find(".teaser-thumbnail img").Attr("src")
 
+		if category == model.CategoryOther {
+			category = model.InferCategory(name, venue)
+		}
+
 		events = append(events, model.Event{
 			Name:      name,
 			StartTime: startTime,

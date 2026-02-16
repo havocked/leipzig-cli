@@ -158,8 +158,8 @@ func (s *Source) fetchPage(ctx context.Context, url string) ([]model.Event, erro
 			}
 		})
 
-		if e.Category == "" {
-			e.Category = model.CategoryOther
+		if e.Category == "" || e.Category == model.CategoryOther {
+			e.Category = model.InferCategory(e.Name, e.Venue)
 		}
 
 		if e.Name != "" {
