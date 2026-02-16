@@ -114,21 +114,22 @@ func pickURL(from, to time.Time) string {
 	tomorrow := today.Add(24 * time.Hour)
 	duration := to.Sub(from)
 
-	if from.After(today) && from.Before(tomorrow.Add(24*time.Hour)) && duration <= 24*time.Hour {
-		if from.After(today.Add(23 * time.Hour)) {
-			return baseURL + "morgen/"
-		}
-	}
-
+	// "week"
 	if duration > 3*24*time.Hour {
 		return baseURL + "7-tage/"
 	}
+
+	// "weekend"
 	if duration > 24*time.Hour {
 		return baseURL + "wochenende/"
 	}
-	if from.After(today.Add(23 * time.Hour)) {
+
+	// "tomorrow"
+	if from.Year() == tomorrow.Year() && from.Month() == tomorrow.Month() && from.Day() == tomorrow.Day() {
 		return baseURL + "morgen/"
 	}
+
+	// Default: "today"
 	return baseURL
 }
 

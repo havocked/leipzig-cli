@@ -43,15 +43,7 @@ func New() *Source {
 func (s *Source) ID() string { return "leipzig.de" }
 
 func (s *Source) Fetch(ctx context.Context, from, to time.Time) ([]model.Event, error) {
-	urls := []string{
-		baseURL + "/kultur-und-freizeit/veranstaltungen/termine-heute",
-	}
-
-	now := time.Now()
-	weekday := now.Weekday()
-	if weekday == time.Friday || weekday == time.Saturday || weekday == time.Sunday {
-		urls = append(urls, baseURL+"/kultur-und-freizeit/veranstaltungen/termine-dieses-wochenende")
-	}
+	urls := pickURLs(from, to)
 
 	var allEvents []model.Event
 	seen := make(map[string]bool)
@@ -63,7 +55,6 @@ func (s *Source) Fetch(ctx context.Context, from, to time.Time) ([]model.Event, 
 
 		events, err := s.fetchPage(ctx, u)
 		if err != nil {
-			fmt.Fprintf(nil, "")
 			return nil, fmt.Errorf("fetch %s: %w", u, err)
 		}
 
@@ -230,4 +221,41 @@ func mapTopicToCategory(topic string) string {
 	}
 
 	return model.CategoryOther
+}
+
+const eventsBase = baseURL + "/kultur-und-freizeit/veranstaltungen/"
+
+func pickURLs(from, to time.Time) []string {
+	loc, _ := time.LoadLocation("Europe/Berlin")
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	tomorrow := today.Add(24 * time.Hour)
+	duration := to.Sub(from)
+
+	// "week" — fetch today + tomorrow + weekend to cover as much as possible
+	if duration > 3*24*time.Hour {
+		return []string{
+			eventsBase + "termine-heute",
+			eventsBase + "termine-morgen",
+			eventsBase + "termine-dieses-wochenende",
+		}
+	}
+
+	// "weekend"
+	if duration > 24*time.Hour {
+		urls := []string{eventsBase + "termine-dieses-wochenende"}
+		// If today is part of the weekend, also fetch today
+		if now.Weekday() == time.Saturday || now.Weekday() == time.Sunday {
+			urls = append([]string{eventsBase + "termine-heute"}, urls...)
+		}
+		return urls
+	}
+
+	// "tomorrow"
+	if from.Year() == tomorrow.Year() && from.Month() == tomorrow.Month() && from.Day() == tomorrow.Day() {
+		return []string{eventsBase + "termine-morgen"}
+	}
+
+	// Default: "today"
+	return []string{eventsBase + "termine-heute"}
 }
