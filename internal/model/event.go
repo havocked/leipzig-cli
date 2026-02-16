@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -41,7 +42,20 @@ type Event struct {
 	Price       string    `json:"price,omitempty"`
 	URL         string    `json:"url,omitempty"`
 	ImageURL    string    `json:"imageUrl,omitempty"`
+	MapURL      string    `json:"mapUrl,omitempty"`
 	Source      string    `json:"source"`
+}
+
+// MapsURL returns a Google Maps search URL for the venue.
+func (e Event) MapsURL() string {
+	if e.Venue == "" {
+		return ""
+	}
+	q := e.Venue + ", Leipzig"
+	if e.Address != "" {
+		q = e.Address + ", Leipzig"
+	}
+	return "https://maps.google.com/?q=" + url.QueryEscape(q)
 }
 
 func (e Event) String() string {

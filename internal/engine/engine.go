@@ -33,6 +33,11 @@ func (e *Engine) Fetch(ctx context.Context, from, to time.Time) ([]model.Event, 
 
 	all = Dedup(all)
 
+	// Populate map URLs
+	for i := range all {
+		all[i].MapURL = all[i].MapsURL()
+	}
+
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].StartTime.Before(all[j].StartTime)
 	})
