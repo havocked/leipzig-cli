@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/havocked/leipzig-cli/internal/source/leipzigde"
+	"github.com/havocked/leipzig-cli/internal/source/prinzde"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,7 @@ var sourcesCmd = &cobra.Command{
 			id, status, desc string
 		}{
 			{leipzigde.New().ID(), "enabled", "City of Leipzig official event calendar"},
+			{prinzde.New().ID(), "enabled", "prinz.de Leipzig event listings"},
 		}
 		fmt.Printf("%-15s %-10s %s\n", "SOURCE", "STATUS", "DESCRIPTION")
 		for _, s := range sources {

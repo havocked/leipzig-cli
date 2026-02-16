@@ -9,6 +9,7 @@ import (
 	"github.com/havocked/leipzig-cli/internal/engine"
 	"github.com/havocked/leipzig-cli/internal/output"
 	"github.com/havocked/leipzig-cli/internal/source/leipzigde"
+	"github.com/havocked/leipzig-cli/internal/source/prinzde"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +69,7 @@ func runEvents(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	eng := engine.New(leipzigde.New())
+	eng := engine.New(leipzigde.New(), prinzde.New())
 	events, err := eng.Fetch(ctx, from, to)
 	if err != nil {
 		return fmt.Errorf("fetch events: %w", err)
