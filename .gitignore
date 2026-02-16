@@ -1,0 +1,18 @@
+# Binaries
+leipzig-cli
+leipzig
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Cache/data
+*.db
+
+# Build
+dist/
