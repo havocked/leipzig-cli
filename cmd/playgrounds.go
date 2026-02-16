@@ -19,16 +19,16 @@ var (
 
 var playgroundsCmd = &cobra.Command{
 	Use:   "playgrounds",
-	Short: "Show Leipzig playgrounds (~320 Spielplätze)",
-	Long:  "Scrape and display all public playgrounds from leipzig.de.",
+	Short: "Find Leipzig's ~320 public playgrounds",
+	Long:  "Search and filter Leipzig's public playgrounds by district or name.",
 	RunE:  runPlaygrounds,
 }
 
 func init() {
-	playgroundsCmd.Flags().StringVarP(&pgDistrict, "district", "d", "", "Filter by district or subdistrict (case-insensitive)")
-	playgroundsCmd.Flags().StringVarP(&pgSearch, "search", "s", "", "Search by name (case-insensitive)")
+	playgroundsCmd.Flags().StringVarP(&pgDistrict, "district", "d", "", "Filter by district/subdistrict (case-insensitive contains)")
+	playgroundsCmd.Flags().StringVarP(&pgSearch, "search", "s", "", "Search by name (case-insensitive contains)")
 	playgroundsCmd.Flags().BoolVar(&pgJSON, "json", false, "JSON output")
-	playgroundsCmd.Flags().IntVarP(&pgLimit, "limit", "n", 0, "Max results to show")
+	playgroundsCmd.Flags().IntVarP(&pgLimit, "limit", "n", 0, "Max results (0=all)")
 	rootCmd.AddCommand(playgroundsCmd)
 }
 
@@ -37,67 +37,61 @@ func runPlaygrounds(cmd *cobra.Command, args []string) error {
 
 	all, err := playground.FetchAll()
 	if err != nil {
-		return fmt.Errorf("fetch playgrounds: %w", err)
+		return fmt.Errorf("fetching playgrounds: %w", err)
 	}
 
-	filtered := all
-	if pgDistrict != "" {
-		d := strings.ToLower(pgDistrict)
-		var out []playground.Playground
-		for _, p := range filtered {
-			if strings.Contains(strings.ToLower(p.District), d) || strings.Contains(strings.ToLower(p.Subdistrict), d) {
-				out = append(out, p)
+	// Filter
+	var results []playground.Playground
+	for _, p := range all {
+		if pgDistrict != "" {
+			d := strings.ToLower(pgDistrict)
+			if !strings.Contains(strings.ToLower(p.District), d) &&
+				!strings.Contains(strings.ToLower(p.Subdistrict), d) {
+				continue
 			}
 		}
-		filtered = out
-	}
-	if pgSearch != "" {
-		s := strings.ToLower(pgSearch)
-		var out []playground.Playground
-		for _, p := range filtered {
-			if strings.Contains(strings.ToLower(p.Name), s) {
-				out = append(out, p)
+		if pgSearch != "" {
+			if !strings.Contains(strings.ToLower(p.Name), strings.ToLower(pgSearch)) {
+				continue
 			}
 		}
-		filtered = out
+		results = append(results, p)
 	}
 
-	total := len(filtered)
-	if pgLimit > 0 && pgLimit < len(filtered) {
-		filtered = filtered[:pgLimit]
+	// Limit
+	if pgLimit > 0 && len(results) > pgLimit {
+		results = results[:pgLimit]
 	}
 
 	if pgJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(filtered)
+		return enc.Encode(results)
 	}
 
-	if len(filtered) == 0 {
-		fmt.Println("No playgrounds found.")
+	if len(results) == 0 {
+		fmt.Println("No playgrounds found matching your criteria.")
 		return nil
 	}
 
-	for i, p := range filtered {
-		if i > 0 {
-			fmt.Println()
-		}
-		district := p.District
-		if p.Subdistrict != "" {
-			district += " / " + p.Subdistrict
-		}
+	for _, p := range results {
 		fmt.Printf("🛝 %s\n", p.Name)
 		if p.Address != "" {
 			fmt.Printf("   📍 %s\n", p.Address)
 		}
-		if district != "" {
-			fmt.Printf("   🏘️  %s\n", district)
+		if p.District != "" {
+			loc := p.District
+			if p.Subdistrict != "" {
+				loc += " / " + p.Subdistrict
+			}
+			fmt.Printf("   🏘️  %s\n", loc)
 		}
 		if p.MapURL != "" {
 			fmt.Printf("   🗺️  %s\n", p.MapURL)
 		}
+		fmt.Println()
 	}
 
-	fmt.Printf("\nShowing %d of %d playgrounds\n", len(filtered), total)
+	fmt.Fprintf(os.Stderr, "Showing %d of %d playgrounds\n", len(results), len(all))
 	return nil
 }
