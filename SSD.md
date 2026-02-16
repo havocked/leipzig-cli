@@ -259,7 +259,7 @@ Once built, Ori can:
 - Suggest family activities on days Elio isn't at Kita
 - Pair concert discoveries with curator for pre-event playlists
 
-## Open Questions
-1. **Rate limiting:** How aggressive can we scrape leipzig.de / leipzig-im.de? Should we add configurable delays?
-2. **Geo data:** Worth adding lat/lng to venues for distance-based filtering? (Nice for "stuff near us")
-3. **Image URLs:** Some events have poster images — include in model or skip?
+## Decisions
+1. **Rate limiting:** Keep it chill — add a small delay between requests (e.g., 500ms). Configurable later if needed.
+2. **Geo data:** Deferred to future phase. Not needed for MVP.
+3. **Image URLs:** Deferred to future phase. Track in model as optional field later.
